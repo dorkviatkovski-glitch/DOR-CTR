@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum CollectionMembershipRole {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+enum CollectionItemCondition {
+  MINT
+  NEAR_MINT
+  LIGHTLY_PLAYED
+  MODERATELY_PLAYED
+  HEAVILY_PLAYED
+  DAMAGED
+  AUTHENTICATED
+}
+
+enum ListingStatus {
+  DRAFT
+  ACTIVE
+  SOLD
+  CANCELLED
+}
+
+model User {
+  id            String                 @id @default(cuid())
+  email         String                 @unique
+  passwordHash  String
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+  deletedAt     DateTime?
+  profile       Profile?
+  memberships   CollectionMembership[]
+
+  @@index([deletedAt])
+}
+
+model Profile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  username    String   @unique
+  displayName String?
+  avatarUrl   String?
+  bio         String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Collection {
+  id            String                 @id @default(cuid())
+  name          String
+  description   String?
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+  deletedAt     DateTime?
+  memberships   CollectionMembership[]
+  items         CollectionItem[]
+
+  @@index([deletedAt])
+}
+
+model CollectionMembership {
+  id           String                   @id @default(cuid())
+  collectionId String
+  userId       String
+  role         CollectionMembershipRole
+  createdAt    DateTime                 @default(now())
+  updatedAt    DateTime                 @updatedAt
+
+  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([collectionId, userId])
+  @@index([userId])
+}
+
+model CollectionItem {
+  id                String                  @id @default(cuid())
+  collectionId      String
+  cardExternalId    String
+  cardName          String
+  setName           String?
+  rarity            String?
+  condition         CollectionItemCondition
+  quantity          Int                     @default(1)
+  notes             String?
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+  deletedAt         DateTime?
+  collection        Collection              @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  listing           MarketplaceListing?
+  valuationHistory  ValuationSnapshot[]
+
+  @@index([collectionId])
+  @@index([cardExternalId])
+  @@index([deletedAt])
+}
+
+model MarketplaceListing {
+  id               String        @id @default(cuid())
+  collectionItemId String        @unique
+  sellerId         String
+  askingPriceCents Int
+  status           ListingStatus @default(DRAFT)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  soldAt           DateTime?
+  cancelledAt      DateTime?
+
+  collectionItem CollectionItem @relation(fields: [collectionItemId], references: [id], onDelete: Restrict)
+  seller         User           @relation(fields: [sellerId], references: [id], onDelete: Restrict)
+
+  @@index([sellerId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model ValuationSnapshot {
+  id               String   @id @default(cuid())
+  collectionItemId String
+  observedAt       DateTime @default(now())
+  source           String
+  priceCents       Int
+  currency         String   @default("USD")
+  confidence       String?
+
+  collectionItem CollectionItem @relation(fields: [collectionItemId], references: [id], onDelete: Cascade)
+
+  @@index([collectionItemId, observedAt])
+  @@index([observedAt])
+}
