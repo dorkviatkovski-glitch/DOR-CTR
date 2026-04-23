@@ -1,0 +1,15 @@
+{
+  "name": "card-collection-platform",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm --workspace @cardx/web run dev",
+    "dev:api": "npm --workspace @cardx/api run dev",
+    "build": "npm run build --workspaces",
+    "lint": "npm run lint --workspaces"
+  }
+}
