@@ -1,0 +1,9 @@
+{
+  "name": "@cardx/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@cardx/types": "0.1.0"
+  }
+}
