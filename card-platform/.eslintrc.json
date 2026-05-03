@@ -1,0 +1,10 @@
+{
+  "root": true,
+  "extends": ["next/core-web-vitals"],
+  "overrides": [
+    {
+      "files": ["apps/api/**/*.ts"],
+      "env": { "node": true }
+    }
+  ]
+}
